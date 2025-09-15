@@ -1,0 +1,58 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: ml-model-pipeline
+spec:
+  params:
+    - name: git-repo
+      type: string
+    - name: model-name
+      type: string
+    - name: target-env
+      type: string
+      default: staging
+  
+  tasks:
+    - name: build-model
+      taskRef:
+        name: build-model-task
+      params:
+        - name: git-repo
+          value: $(params.git-repo)
+        - name: model-name
+          value: $(params.model-name)
+    
+    - name: test-validation
+      taskRef:
+        name: test-model-task
+      runAfter:
+        - build-model
+      params:
+        - name: model-image
+          value: $(tasks.build-model.results.model-image)
+    
+    - name: deploy-staging
+      taskRef:
+        name: deploy-model-task
+      runAfter:
+        - test-validation
+      params:
+        - name: model-image
+          value: $(tasks.build-model.results.model-image)
+        - name: environment
+          value: staging
+    
+    - name: deploy-production
+      taskRef:
+        name: deploy-model-task
+      runAfter:
+        - deploy-staging
+      when:
+        - input: $(params.target-env)
+          operator: in
+          values: ["production"]
+      params:
+        - name: model-image
+          value: $(tasks.build-model.results.model-image)
+        - name: environment
+          value: production

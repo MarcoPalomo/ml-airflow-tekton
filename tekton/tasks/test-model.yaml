@@ -1,0 +1,24 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: test-model-task
+spec:
+  params:
+    - name: model-image
+  steps:
+    - name: unit-tests
+      image: $(params.model-image)
+      script: |
+        python -m pytest tests/unit/
+    
+    - name: integration-tests
+      image: $(params.model-image)
+      script: |
+        python -m pytest tests/integration/
+    
+    - name: model-validation
+      image: $(params.model-image)
+      script: |
+        python scripts/validate_model_performance.py \
+          --test-dataset /data/test-set.csv \
+          --min-accuracy 0.85
