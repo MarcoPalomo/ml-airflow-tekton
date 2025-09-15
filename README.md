@@ -215,5 +215,5 @@ Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
 ---
 
 <div align="center">
-  <p>Développé avec ❤️ par l'équipe Data Science</p>
+  <p>Développé avec ❤️ par l'équipe Data Science de CNaaS IT</p>
 </div>
