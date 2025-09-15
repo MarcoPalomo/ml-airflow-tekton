@@ -1,0 +1,30 @@
+# ML Libraries
+scikit-learn==1.3.0
+pandas==2.0.3
+numpy==1.24.3
+joblib==1.3.2
+
+# API Framework
+fastapi==0.103.0
+uvicorn[standard]==0.23.2
+pydantic==2.3.0
+
+# MLOps
+mlflow==2.6.0
+great-expectations==0.17.12
+
+# Data processing
+pyarrow==13.0.0
+
+# Monitoring
+prometheus-client==0.17.1
+
+# Testing
+pytest==7.4.0
+pytest-cov==4.1.0
+pytest-mock==3.11.1
+
+# Utilities
+python-multipart==0.0.6
+requests==2.31.0
+pyyaml==6.0.1
