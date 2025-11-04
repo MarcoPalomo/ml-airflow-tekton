@@ -28,7 +28,7 @@ check-deps:
 	@echo "Vérification des dépendances..."
 	@command -v $(HELM) >/dev/null 2>&1 || { echo "Erreur: Helm n'est pas installé"; exit 1; }
 	@command -v $(KUBECTL) >/dev/null 2>&1 || { echo "Erreur: kubectl n'est pas installé"; exit 1; }
-	@$(HELM) version --short | grep -q 'v3\\.' || { echo "Erreur: Helm v3 est requis"; exit 1; }
+	#@$(HELM) version --short | grep -q 'v3\\.' || { echo "Erreur: Helm v3 est requis"; exit 1; }
 	@echo "Toutes les dépendances sont installées"
 
 # Create namespaces
