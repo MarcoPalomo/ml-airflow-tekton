@@ -1,4 +1,4 @@
-.PHONY: help install-tekton install-mlflow install-starburst uninstall-all check-deps
+.PHONY: help install-tekton install-mlflow install-starburst uninstall-all check-deps add-repos
 
 # Environment variables
 HELM := helm
@@ -7,6 +7,12 @@ HELM_CHARTS_DIR := ./infrastructure/helm-charts
 NAMESPACE_TEKTON := tekton-pipelines
 NAMESPACE_MLFLOW := mlflow
 NAMESPACE_STARBURST := starburst
+
+# Helm repositories
+#TEKTON_REPO := https://storage.googleapis.com/tekton-releases/pipeline/helm
+TEKTON_REPO := https://tektoncd.github.io/charts
+MLFLOW_REPO := https://community-charts.github.io/helm-charts
+STARBURST_REPO := https://harbor.starburstdata.net/chartrepo/starburstdata
 
 # Default help
 help:
@@ -38,8 +44,16 @@ create-namespaces:
 	@$(KUBECTL) create namespace $(NAMESPACE_MLFLOW) --dry-run=client -o yaml | $(KUBECTL) apply -f-
 	@$(KUBECTL) create namespace $(NAMESPACE_STARBURST) --dry-run=client -o yaml | $(KUBECTL) apply -f-
 
+# Add Helm repositories
+add-repos:
+	@echo "Ajout des repositories Helm..."
+	@$(HELM) repo add tekton $(TEKTON_REPO)
+	@$(HELM) repo add mlflow $(MLFLOW_REPO)
+	@$(HELM) repo add starburst $(STARBURST_REPO)
+	@$(HELM) repo update
+
 # Update dependencies
-update-deps:
+update-deps: add-repos
 	@echo "Mise à jour des dépendances des charts Helm..."
 	@cd $(HELM_CHARTS_DIR)/tekton && $(HELM) dependency update
 	@cd $(HELM_CHARTS_DIR)/mlflow && $(HELM) dependency update
@@ -58,7 +72,7 @@ install-tekton: check-deps
 install-mlflow: check-deps
 	@echo "Installation de MLflow..."
 	@$(HELM) upgrade --install mlflow $(HELM_CHARTS_DIR)/mlflow \
-		--namespace $(NAMESPACE_MLFLOW} \
+		--namespace $(NAMESPACE_MLFLOW) \
 		--create-namespace \
 		--set mlflow.server.aws.accessKeyId=$(AWS_ACCESS_KEY_ID) \
 		--set mlflow.server.aws.secretAccessKey=$(AWS_SECRET_ACCESS_KEY) \
@@ -71,7 +85,7 @@ install-mlflow: check-deps
 install-starburst: check-deps
 	@echo "Installation de Starburst..."
 	@$(HELM) upgrade --install starburst $(HELM_CHARTS_DIR)/starburst \
-		--namespace $(NAMESPACE_STARBURST} \
+		--namespace $(NAMESPACE_STARBURST) \
 		--create-namespace \
 		--set starburst.catalogs.hive.hive.s3.aws-access-key=$(AWS_ACCESS_KEY_ID) \
 		--set starburst.catalogs.hive.hive.s3.aws-secret-key=$(AWS_SECRET_ACCESS_KEY) \
