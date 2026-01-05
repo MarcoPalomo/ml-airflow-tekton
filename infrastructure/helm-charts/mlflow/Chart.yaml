@@ -1,0 +1,19 @@
+apiVersion: v2
+name: mlflow
+version: 0.1.0
+appVersion: "2.8.1"
+description: A Helm chart for MLflow Tracking Server
+type: application
+keywords:
+  - mlops
+  - machine-learning
+  - mlflow
+  - tracking
+maintainers:
+  - name: ML Team
+    email: contact@cnaas.link
+
+dependencies:
+  - name: common
+    version: 2.x.x
+    repository: https://charts.bitnami.com/bitnami

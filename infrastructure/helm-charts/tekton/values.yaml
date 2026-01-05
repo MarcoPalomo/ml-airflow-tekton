@@ -1,0 +1,44 @@
+# Configuration for Tekton Pipelines
+tekton-pipeline:
+  controller:
+    serviceAccount:
+      create: true
+      name: tekton-pipelines-controller
+    config:
+      defaults:
+        default-cloud-events-sink: http://tekton-events.tekton-pipelines.svc.cluster.local:8080
+      feature-flags:
+        enable-api-fields: "stable"
+        enable-tekton-oci-bundles: "false"
+  webhook:
+    replicaCount: 1
+
+# Configuration for Tekton Triggers
+tekton-triggers:
+  controller:
+    serviceAccount:
+      create: true
+      name: tekton-triggers-controller
+    config:
+      defaults:
+        default-cloud-events-sink: http://tekton-events.tekton-pipelines.svc.cluster.local:8080
+  webhook:
+    replicaCount: 1
+
+# RBAC configuration
+rbac:
+  create: true
+
+# Namespace configuration
+namespace:
+  create: true
+  name: tekton-pipelines
+
+# Resource limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi

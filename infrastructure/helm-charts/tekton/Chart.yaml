@@ -1,0 +1,24 @@
+apiVersion: v2
+name: tekton
+version: 0.1.0
+appVersion: "0.30.0"
+description: A Helm chart for deploying Tekton Pipelines and Triggers
+type: application
+keywords:
+  - ci-cd
+  - devops
+  - tekton
+  - pipelines
+maintainers:
+  - name: ML Team
+    email: contact@cnaas.link
+
+dependencies:
+  - name: tekton-pipeline
+    version: "0.53.0"
+    repository: https://charts.tekton.dev
+  - name: tekton-triggers
+    version: "0.24.0"
+    repository: https://charts.tekton.dev
+    version: "0.21.0"
+    repository: https://charts.tekton.dev

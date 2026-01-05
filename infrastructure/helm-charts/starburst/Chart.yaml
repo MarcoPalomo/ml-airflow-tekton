@@ -1,0 +1,20 @@
+apiVersion: v2
+name: starburst
+version: 0.1.0
+appVersion: "429-e"
+description: A Helm chart for Starburst Enterprise Platform
+type: application
+keywords:
+  - sql
+  - analytics
+  - presto
+  - starburst
+  - data-warehouse
+maintainers:
+  - name: ML Team
+    email: contact@cnaas.link
+
+dependencies:
+  - name: common
+    version: 2.x.x
+    repository: https://charts.bitnami.com/bitnami
