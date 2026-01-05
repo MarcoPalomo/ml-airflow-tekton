@@ -1,19 +1,8 @@
 """
 Configuration des connexions Airflow
-
-⚠️ AVERTISSEMENT DE SÉCURITÉ ⚠️
-=====================================
-Ce fichier contient des configurations de connexion avec des valeurs de placeholder.
-
-ACTIONS REQUISES EN PRODUCTION:
+pour la production:
 1. NE JAMAIS hardcoder de credentials réels dans ce fichier
-2. Utiliser un gestionnaire de secrets approprié:
-   - Kubernetes Secrets
-   - HashiCorp Vault
-   - AWS Secrets Manager
-   - Azure Key Vault
-   - Google Secret Manager
-
+2. Utiliser un gestionnaire de secrets
 3. Options recommandées pour gérer les connexions Airflow:
    a) Variables d'environnement:
       AIRFLOW_CONN_STARBURST_TRINO='trino://user:pass@host:port/schema'
@@ -44,9 +33,7 @@ from airflow.models import Connection
 from airflow import settings
 import os
 
-# ⚠️ SÉCURITÉ: Utiliser des variables d'environnement plutôt que des valeurs hardcodées
-# Les valeurs par défaut ci-dessous sont des PLACEHOLDERS et NE DOIVENT PAS être utilisées en production
-
+# Utiliser des variables d'environnement au lieu des PLACEHOLDERS 
 # Connexion Starburst Trino
 trino_conn = Connection(
     conn_id='starburst_trino',
@@ -55,12 +42,11 @@ trino_conn = Connection(
     port=int(os.getenv('TRINO_PORT', '8080')),
     schema=os.getenv('TRINO_SCHEMA', 'lakehouse'),
     login=os.getenv('TRINO_USER', 'airflow-service-account'),
-    password=os.getenv('TRINO_PASSWORD', None),  # ⚠️ À définir via variable d'environnement
+    password=os.getenv('TRINO_PASSWORD', None),  # À définir via variable d'environnement
     extra=os.getenv('TRINO_EXTRA', '{"auth": "basic", "verify": "/path/to/ca-cert.pem"}')
 )
 
 # Connexion S3 pour les modèles
-# ⚠️ CRITIQUE: Remplacer "XXX" et "YYY" par vos vraies credentials OU utiliser IAM Roles
 s3_conn = Connection(
     conn_id='aws_s3',
     conn_type='aws',

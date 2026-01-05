@@ -17,8 +17,8 @@ spec:
     - name: build-docker-image
       image: gcr.io/kaniko-project/executor:latest
       script: |
-        executor --dockerfile=/workspace/source/Dockerfile \
-                 --context=/workspace/source \
-                 --destination=registry/$(params.model-name):$(date +%Y%m%d-%H%M%S) \
-                 --cache=true
+        /kaniko/executor --dockerfile=/workspace/source/Dockerfile \
+                         --context=/workspace/source \
+                         --destination=registry/$(params.model-name):$(date +%Y%m%d-%H%M%S) \
+                         --cache=true
         echo "registry/$(params.model-name):$(date +%Y%m%d-%H%M%S)" > $(results.model-image.path)

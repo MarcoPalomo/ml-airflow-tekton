@@ -5,6 +5,64 @@ import pandas as pd
 from sqlalchemy import create_engine
 from typing import Dict, Any, List, Union
 from urllib.parse import quote_plus
+from sklearn.metrics import accuracy_score
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def load_validation_data(validation_data_path: str) -> pd.DataFrame:
+    """
+    Charge les données de validation depuis S3 ou un chemin local.
+
+    Args:
+        validation_data_path (str): Chemin vers les données de validation (S3 ou local)
+
+    Returns:
+        pd.DataFrame: Données de validation
+    """
+    try:
+        if validation_data_path.startswith('s3://'):
+            # Charger depuis S3
+            logger.info(f"Chargement des données de validation depuis S3: {validation_data_path}")
+            df = pd.read_parquet(validation_data_path)
+        else:
+            # Charger depuis un chemin local
+            logger.info(f"Chargement des données de validation depuis le système de fichiers: {validation_data_path}")
+            if validation_data_path.endswith('.parquet'):
+                df = pd.read_parquet(validation_data_path)
+            elif validation_data_path.endswith('.csv'):
+                df = pd.read_csv(validation_data_path)
+            else:
+                raise ValueError(f"Format de fichier non supporté: {validation_data_path}")
+
+        logger.info(f"Données de validation chargées: {len(df)} lignes, {len(df.columns)} colonnes")
+        return df
+
+    except Exception as e:
+        logger.error(f"Erreur lors du chargement des données de validation: {str(e)}")
+        raise
+
+
+def calculate_accuracy(y_true: pd.Series, y_pred: pd.Series) -> float:
+    """
+    Calcule l'accuracy entre les vraies valeurs et les prédictions.
+
+    Args:
+        y_true (pd.Series): Valeurs réelles
+        y_pred (pd.Series): Valeurs prédites
+
+    Returns:
+        float: Score d'accuracy
+    """
+    try:
+        accuracy = accuracy_score(y_true, y_pred)
+        logger.info(f"Accuracy calculée: {accuracy:.4f}")
+        return accuracy
+    except Exception as e:
+        logger.error(f"Erreur lors du calcul de l'accuracy: {str(e)}")
+        raise
+
 
 def validate_model_performance(model_path: str, validation_data_path: str, min_accuracy_threshold: float, **context):
     """Valide les performances du modèle ré-entrainé"""

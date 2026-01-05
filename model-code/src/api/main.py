@@ -82,10 +82,10 @@ async def predict(request: PredictionRequest):
     try:
         # Conversion en DataFrame
         df = pd.DataFrame([request.features])
-        
+
         # Préprocessing si disponible
         if preprocessor is not None:
-            df_processed, _ = preprocessor.prepare_data(df, is_training=False)
+            df_processed, _ = preprocessor.prepare_dataframe(df, is_training=False)
         else:
             df_processed = df
         
@@ -112,10 +112,10 @@ async def batch_predict(request: BatchPredictionRequest):
     try:
         # Conversion en DataFrame
         df = pd.DataFrame(request.instances)
-        
+
         # Préprocessing si disponible
         if preprocessor is not None:
-            df_processed, _ = preprocessor.prepare_data(df, is_training=False)
+            df_processed, _ = preprocessor.prepare_dataframe(df, is_training=False)
         else:
             df_processed = df
         

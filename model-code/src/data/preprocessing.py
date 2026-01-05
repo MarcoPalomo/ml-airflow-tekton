@@ -129,35 +129,50 @@ class DataPreprocessor:
         
         return df_scaled
 
-    def prepare_data(self, data_path: str, is_training: bool = True) -> Tuple[pd.DataFrame, pd.Series]:
-        """Pipeline complet de préparation des données"""
-        # Chargement
-        df = self.load_data(data_path)
-        
+    def prepare_dataframe(self, df: pd.DataFrame, is_training: bool = False) -> Tuple[pd.DataFrame, pd.Series]:
+        """
+        Pipeline de préparation des données à partir d'un DataFrame existant.
+        Utilisé principalement pour l'inférence (API).
+
+        Args:
+            df (pd.DataFrame): DataFrame contenant les données à préparer
+            is_training (bool): Indique si on est en mode entraînement ou inférence
+
+        Returns:
+            Tuple[pd.DataFrame, pd.Series]: Features préparées et target (vide si pas de target)
+        """
         # Nettoyage
         df_clean = self.clean_data(df)
-        
+
         # Feature engineering
         df_features = self.feature_engineering(df_clean)
-        
+
         # Encodage
         df_encoded = self.encode_features(df_features, is_training)
-        
+
         # Scaling
         df_scaled = self.scale_features(df_encoded, is_training)
-        
+
         # Séparation features/target
         target_column = self.config.get('target_column', 'target')
-        
+
         if target_column in df_scaled.columns:
             X = df_scaled.drop(columns=[target_column])
             y = df_scaled[target_column]
         else:
             X = df_scaled
             y = pd.Series()
-        
-        logger.info(f"Données préparées: {X.shape[0]} lignes, {X.shape[1]} features")
+
+        logger.info(f"DataFrame préparé: {X.shape[0]} lignes, {X.shape[1]} features")
         return X, y
+
+    def prepare_data(self, data_path: str, is_training: bool = True) -> Tuple[pd.DataFrame, pd.Series]:
+        """Pipeline complet de préparation des données depuis un fichier"""
+        # Chargement
+        df = self.load_data(data_path)
+
+        # Utilisation de prepare_dataframe pour le reste du pipeline
+        return self.prepare_dataframe(df, is_training)
 
     def split_data(self, X: pd.DataFrame, y: pd.Series, test_size: float = 0.2, 
                    random_state: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
