@@ -2,7 +2,7 @@
 
 Ce dépôt contient une implémentation d'un pipeline MLOps complet utilisant Airflow pour l'orchestration des workflows et Tekton pour l'intégration et le déploiement continus.
 
-## 📋 Table des matières
+## Table des matières
 
 - [Architecture](#-architecture)
 - [Prérequis](#-prérequis)
@@ -15,7 +15,7 @@ Ce dépôt contient une implémentation d'un pipeline MLOps complet utilisant Ai
 - [Contributions](#-contributions)
 - [Licence](#-licence)
 
-## 🏗️ Architecture
+## Architecture
 
 Le projet suit une architecture modulaire avec les composants principaux suivants :
 
@@ -25,7 +25,7 @@ Le projet suit une architecture modulaire avec les composants principaux suivant
 - **Trino/Starburst** : Requêtage fédéré des données
 - **MLflow** : Suivi des expériences et gestion des modèles
 
-## 📋 Prérequis
+## Prérequis
 
 - Kubernetes 1.20+
 - Tekton Pipelines 0.30.0+
@@ -33,7 +33,7 @@ Le projet suit une architecture modulaire avec les composants principaux suivant
 - Helm 3.0+
 - kubectl configuré avec accès au cluster
 
-## 🚀 Installation
+## Installation
 
 ### 1. Configuration de l'environnement
 
@@ -74,7 +74,7 @@ helm install airflow apache-airflow/airflow -n airflow --create-namespace \
   --set dags.gitSync.branch=main
 ```
 
-## 🛠️ Utilisation
+## Utilisation
 
 ### Exécution du pipeline de re-entraînement
 
@@ -110,7 +110,7 @@ spec:
 EOF
 ```
 
-## 📁 Structure du Projet
+## Structure du Projet
 
 ```
 .
@@ -133,7 +133,7 @@ EOF
     └── pipeline.yaml         # Définition du pipeline principal
 ```
 
-## 🔧 Développement
+## Développement
 
 ### Configuration de l'environnement de développement
 
@@ -166,7 +166,7 @@ flake8 model-code/
 black model-code/
 ```
 
-## 🚀 Déploiement
+## Déploiement
 
 ### Environnement de Staging
 
@@ -180,7 +180,7 @@ Le déploiement en production nécessite une approbation manuelle :
 2. Déclencher le pipeline avec le paramètre `target-env=production`
 3. Valider le déploiement via l'interface de monitoring
 
-## 🛠️ Maintenance
+## Maintenance
 
 ### Surveillance
 
@@ -198,7 +198,7 @@ kubectl logs -n airflow deploy/airflow-webserver
 tkn pipelinerun logs -f
 ```
 
-## 🤝 Contributions
+## Contributions
 
 Les contributions sont les bienvenues ! Voici comment contribuer :
 
