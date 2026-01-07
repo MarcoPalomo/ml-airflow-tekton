@@ -1,0 +1,85 @@
+# Configuration Airflow simplifiée pour installation rapide
+executor: KubernetesExecutor
+
+# Désactiver les fonctionnalités non essentielles pour accélérer l'installation
+redis:
+  enabled: false  # Pas nécessaire avec KubernetesExecutor
+
+# Configuration PostgreSQL optimisée
+postgresql:
+  enabled: true
+  auth:
+    enablePostgresUser: true
+    postgresPassword: postgres
+  primary:
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+# Utilisateur par défaut
+webserver:
+  defaultUser:
+    enabled: true
+    username: admin
+    password: admin
+    email: admin@example.com
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Scheduler optimisé
+scheduler:
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+# Désactiver le triggerer (pas nécessaire pour démarrer)
+triggerer:
+  enabled: false
+
+# Workers (non utilisé avec KubernetesExecutor)
+workers:
+  enabled: false
+
+# Réduire les réplicas pour accélérer le démarrage
+webserver:
+  replicas: 1
+
+scheduler:
+  replicas: 1
+
+# Configuration de la migration de DB
+migrateDatabaseJob:
+  enabled: true
+  jobAnnotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Configuration des DAGs
+dags:
+  persistence:
+    enabled: false  # Simplifier pour l'installation initiale
+  gitSync:
+    enabled: false
+
+# Configuration des logs
+logs:
+  persistence:
+    enabled: false  # Simplifier pour l'installation initiale
