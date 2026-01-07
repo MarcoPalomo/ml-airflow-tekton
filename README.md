@@ -198,15 +198,65 @@ kubectl logs -n airflow deploy/airflow-webserver
 tkn pipelinerun logs -f
 ```
 
+## 🧪 Tests
+
+Le projet dispose d'une suite de tests complète avec plus de 140 tests couvrant tous les modules.
+
+### Exécution Rapide
+
+```bash
+# Premier lancement (setup complet)
+./setup_and_test.sh
+
+# Lancements suivants (rapide)
+./quick_test.sh
+
+# Avec couverture de code
+./setup_and_test.sh --coverage
+```
+
+### Statistiques des Tests
+
+- **Total** : 140+ tests
+- **Couverture** : ~85%
+- **Temps d'exécution** : ~30 secondes
+
+### Documentation
+
+- **Guide simple** : [`RUN_TESTS.md`](RUN_TESTS.md)
+- **Guide complet** : [`TESTING_INSTRUCTIONS.md`](TESTING_INSTRUCTIONS.md)
+- **Aide-mémoire** : [`QUICK_TEST_GUIDE.md`](QUICK_TEST_GUIDE.md)
+
+## 🔒 Sécurité
+
+Des efforts importants ont été faits pour sécuriser ce projet :
+
+- ✅ Variables d'environnement pour les credentials (`.env.example` fourni)
+- ✅ `.gitignore` complet pour éviter les commits de secrets
+- ✅ Guide de sécurité complet ([`SECURITY.md`](SECURITY.md))
+- ✅ Checklist pré-production (Infrastructure, Airflow, MLflow, Tekton, API)
+
+⚠️ **Important** : Consultez [`SECURITY.md`](SECURITY.md) avant le déploiement en production.
+
+## 📝 Documentation
+
+- [`README.md`](README.md) - Ce fichier (vue d'ensemble)
+- [`CORRECTIONS.md`](CORRECTIONS.md) - Rapport détaillé des corrections effectuées
+- [`SECURITY.md`](SECURITY.md) - Guide de sécurité complet (400+ lignes)
+- [`RUN_TESTS.md`](RUN_TESTS.md) - Comment exécuter les tests
+- [`model-code/tests/README.md`](model-code/tests/README.md) - Documentation technique des tests
+
 ## Contributions
 
 Les contributions sont les bienvenues ! Voici comment contribuer :
 
 1. Forkez le projet
 2. Créez une branche pour votre fonctionnalité (`git checkout -b feature/ma-nouvelle-fonctionnalite`)
-3. Committez vos changements (`git commit -am 'Ajouter une nouvelle fonctionnalité'`)
-4. Poussez vers la branche (`git push origin feature/ma-nouvelle-fonctionnalite`)
-5. Créez une Pull Request
+3. **Exécutez les tests** (`./setup_and_test.sh --coverage`)
+4. **Vérifiez la couverture** (≥ 80%)
+5. Committez vos changements (`git commit -am 'Ajouter une nouvelle fonctionnalité'`)
+6. Poussez vers la branche (`git push origin feature/ma-nouvelle-fonctionnalite`)
+7. Créez une Pull Request
 
 ## 📄 Licence
 
