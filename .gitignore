@@ -1,0 +1,239 @@
+# ==========================================
+# ML Airflow Tekton - .gitignore
+# ==========================================
+
+# ==========================================
+# Secrets & Environment Variables
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.secret
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+credentials.json
+secrets.yaml
+secrets.yml
+
+# ==========================================
+# Python
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.manifest
+*.spec
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+virtualenv/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+junit/
+
+# ==========================================
+# Jupyter Notebook
+# ==========================================
+.ipynb_checkpoints
+*.ipynb
+
+# ==========================================
+# Airflow
+# ==========================================
+airflow.db
+airflow.cfg
+airflow-webserver.pid
+unittests.cfg
+logs/
+airflow/logs/
+*.log
+*.pid
+
+# ==========================================
+# MLflow
+# ==========================================
+mlruns/
+mlartifacts/
+mlflow.db
+
+# ==========================================
+# Model files (large files)
+# ==========================================
+*.joblib
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+*.onnx
+*.pt
+*.pth
+*.model
+models/
+artifacts/
+
+# ==========================================
+# Data files (should be in S3/remote storage)
+# ==========================================
+data/
+*.csv
+*.parquet
+*.feather
+*.json
+*.jsonl
+*.arrow
+*.avro
+
+# Exceptions for config files
+!**/config/*.json
+!**/config/*.yaml
+!**/config/*.yml
+
+# ==========================================
+# Terraform
+# ==========================================
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# ==========================================
+# Kubernetes
+# ==========================================
+*.kubeconfig
+kubeconfig
+.kube/
+
+# ==========================================
+# Docker
+# ==========================================
+docker-compose.override.yml
+.dockerignore
+
+# ==========================================
+# IDE / Editors
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+.metadata
+
+# ==========================================
+# OS
+# ==========================================
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ==========================================
+# Temporary files
+# ==========================================
+*.tmp
+*.temp
+*.bak
+*.backup
+tmp/
+temp/
+
+# ==========================================
+# Monitoring & Logs
+# ==========================================
+*.log
+logs/
+*.log.*
+
+# ==========================================
+# SSL Certificates
+# ==========================================
+*.csr
+*.key
+*.pem
+*.crt
+*.cer
+*.der
+*.ca-bundle
+
+# ==========================================
+# Cloud Provider specific
+# ==========================================
+.aws/
+.azure/
+.gcp/
+
+# ==========================================
+# Helm
+# ==========================================
+charts/*.tgz
+.helmignore
+
+# ==========================================
+# Custom - Project specific
+# ==========================================
+# Add your project-specific ignores here
+
+# Environnements virtuels du projet
+mlenv/
+.venv/

@@ -1,0 +1,27 @@
+[project]
+name = "ml-airflow-tekton"
+version = "0.2.0"
+description = "Plateforme MLOps : Airflow, Tekton, MLflow, Starburst/Trino"
+requires-python = ">=3.12"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = [".venv", "venv", "mlenv", "ENV", "env"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+# E501 (longueur de ligne) est géré par le formateur.
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Les tests manipulent sys.path avant les imports et utilisent volontairement
+# des assertions larges (pytest.raises(Exception), isinstance avec tuple).
+"**/tests/**" = ["E402", "B017", "UP038"]
+"airflow/dags/**" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["model-code/tests"]

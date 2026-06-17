@@ -29,33 +29,33 @@ Pour plus d'infos: https://airflow.apache.org/docs/apache-airflow/stable/securit
 =====================================
 """
 
-from airflow.models import Connection
-from airflow import settings
 import os
 
-# Utiliser des variables d'environnement au lieu des PLACEHOLDERS 
+from airflow.models import Connection
+
+# Utiliser des variables d'environnement au lieu des PLACEHOLDERS
 # Connexion Starburst Trino
 trino_conn = Connection(
-    conn_id='starburst_trino',
-    conn_type='trino',
-    host=os.getenv('TRINO_HOST', 'starburst-coordinator.cluster.local'),
-    port=int(os.getenv('TRINO_PORT', '8080')),
-    schema=os.getenv('TRINO_SCHEMA', 'lakehouse'),
-    login=os.getenv('TRINO_USER', 'airflow-service-account'),
-    password=os.getenv('TRINO_PASSWORD', None),  # À définir via variable d'environnement
-    extra=os.getenv('TRINO_EXTRA', '{"auth": "basic", "verify": "/path/to/ca-cert.pem"}')
+    conn_id="starburst_trino",
+    conn_type="trino",
+    host=os.getenv("TRINO_HOST", "starburst-coordinator.cluster.local"),
+    port=int(os.getenv("TRINO_PORT", "8080")),
+    schema=os.getenv("TRINO_SCHEMA", "lakehouse"),
+    login=os.getenv("TRINO_USER", "airflow-service-account"),
+    password=os.getenv("TRINO_PASSWORD", None),  # À définir via variable d'environnement
+    extra=os.getenv("TRINO_EXTRA", '{"auth": "basic", "verify": "/path/to/ca-cert.pem"}'),
 )
 
 # Connexion S3 pour les modèles
 s3_conn = Connection(
-    conn_id='aws_s3',
-    conn_type='aws',
+    conn_id="aws_s3",
+    conn_type="aws",
     extra=os.getenv(
-        'AWS_S3_EXTRA',
-        '{"aws_access_key_id": "' + os.getenv('AWS_ACCESS_KEY_ID', 'XXX') + '", '
-        '"aws_secret_access_key": "' + os.getenv('AWS_SECRET_ACCESS_KEY', 'YYY') + '", '
-        '"region_name": "' + os.getenv('AWS_DEFAULT_REGION', 'eu-west-1') + '"}'
-    )
+        "AWS_S3_EXTRA",
+        '{"aws_access_key_id": "' + os.getenv("AWS_ACCESS_KEY_ID", "XXX") + '", '
+        '"aws_secret_access_key": "' + os.getenv("AWS_SECRET_ACCESS_KEY", "YYY") + '", '
+        '"region_name": "' + os.getenv("AWS_DEFAULT_REGION", "eu-west-1") + '"}',
+    ),
 )
 
 # Note: En production, préférer l'utilisation de IAM Roles pour EC2/EKS plutôt que des access keys

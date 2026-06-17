@@ -27,9 +27,10 @@ Le projet suit une architecture modulaire avec les composants principaux suivant
 
 ## Prérequis
 
-- Kubernetes 1.20+
-- Tekton Pipelines 0.30.0+
-- Airflow 2.3.0+
+- Kubernetes 1.28+
+- Tekton Pipelines 0.56.0+ (API `tekton.dev/v1`)
+- Airflow 3.0+
+- Python 3.12+
 - Helm 3.0+
 - kubectl configuré avec accès au cluster
 
@@ -93,7 +94,7 @@ kubectl exec -n airflow deploy/airflow-webserver -- airflow dags trigger ml_mode
 ```bash
 # Créer un PipelineRun
 cat <<EOF | kubectl apply -f -
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: PipelineRun
 metadata:
   generateName: ml-pipeline-run-
@@ -103,10 +104,20 @@ spec:
   params:
     - name: git-repo
       value: https://github.com/votre-org/ml-airflow-tekton.git
+    - name: git-revision
+      value: main
     - name: model-name
       value: mon-modele
     - name: target-env
       value: staging
+  workspaces:
+    - name: shared-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi
 EOF
 ```
 
@@ -139,31 +150,35 @@ EOF
 
 ```bash
 # Créer un environnement virtuel
-python -m venv venv
-source venv/bin/activate  # Sur Windows: .\venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate  # Sur Windows: .\.venv\Scripts\activate
 
-# Installer les dépendances de développement
-pip install -r requirements-dev.txt
+# Installer les dépendances (modèle + tests)
+pip install -r model-code/requirements.txt
+
+# Installer les hooks pre-commit (ruff, fin de fichier, yaml)
+pip install pre-commit && pre-commit install
 ```
 
 ### Exécution des tests
 
 ```bash
-# Exécuter les tests unitaires
-pytest model-code/tests/unit
+# Script unique (venv + install + pytest)
+./scripts/test.sh
 
-# Exécuter les tests d'intégration
-pytest model-code/tests/integration
+# Ou directement avec pytest
+pytest model-code/tests/
+pytest model-code/tests/ -m unit       # filtrer par marqueur
 ```
 
 ### Linting et formatage
 
 ```bash
-# Vérifier le style de code
-flake8 model-code/
+# Lint
+ruff check .
 
-# Formater le code
-black model-code/
+# Formatage
+ruff format .
 ```
 
 ## Déploiement
@@ -200,32 +215,30 @@ tkn pipelinerun logs -f
 
 ## 🧪 Tests
 
-Le projet dispose d'une suite de tests complète avec plus de 140 tests couvrant tous les modules.
+La suite de tests (61 tests) couvre l'API, le preprocessing, l'entraînement et les fonctions Airflow.
 
-### Exécution Rapide
+### Exécution
 
 ```bash
-# Premier lancement (setup complet)
-./setup_and_test.sh
+# Crée/réutilise le venv, installe les dépendances de test et lance pytest
+./scripts/test.sh
 
-# Lancements suivants (rapide)
-./quick_test.sh
+# Avec couverture de code (rapport terminal + HTML)
+./scripts/test.sh --cov
 
-# Avec couverture de code
-./setup_and_test.sh --coverage
+# Filtrer par marqueur pytest
+./scripts/test.sh -m unit
+
+# Nettoyer le venv et les caches
+./scripts/test.sh --clean
 ```
 
-### Statistiques des Tests
+La CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) exécute Ruff (lint + format) et la suite pytest à chaque push/PR.
 
-- **Total** : 140+ tests
-- **Couverture** : ~85%
-- **Temps d'exécution** : ~30 secondes
+### Documentation des tests
 
-### Documentation
-
-- **Guide simple** : [`RUN_TESTS.md`](RUN_TESTS.md)
-- **Guide complet** : [`TESTING_INSTRUCTIONS.md`](TESTING_INSTRUCTIONS.md)
-- **Aide-mémoire** : [`QUICK_TEST_GUIDE.md`](QUICK_TEST_GUIDE.md)
+- **Guides détaillés** : voir le dossier [`docs/`](docs/) (`RUN_TESTS.md`, `TESTING_INSTRUCTIONS.md`, `QUICK_TEST_GUIDE.md`)
+- **Documentation technique** : [`model-code/tests/README.md`](model-code/tests/README.md)
 
 ## 🔒 Sécurité
 
@@ -241,9 +254,8 @@ Des efforts importants ont été faits pour sécuriser ce projet :
 ## 📝 Documentation
 
 - [`README.md`](README.md) - Ce fichier (vue d'ensemble)
-- [`CORRECTIONS.md`](CORRECTIONS.md) - Rapport détaillé des corrections effectuées
-- [`SECURITY.md`](SECURITY.md) - Guide de sécurité complet (400+ lignes)
-- [`RUN_TESTS.md`](RUN_TESTS.md) - Comment exécuter les tests
+- [`SECURITY.md`](SECURITY.md) - Guide de sécurité complet
+- [`docs/`](docs/) - Guides détaillés (installation Airflow, Makefile, dépannage Tekton, tests, etc.)
 - [`model-code/tests/README.md`](model-code/tests/README.md) - Documentation technique des tests
 
 ## Contributions
@@ -252,7 +264,7 @@ Les contributions sont les bienvenues ! Voici comment contribuer :
 
 1. Forkez le projet
 2. Créez une branche pour votre fonctionnalité (`git checkout -b feature/ma-nouvelle-fonctionnalite`)
-3. **Exécutez les tests** (`./setup_and_test.sh --coverage`)
+3. **Exécutez les tests** (`./scripts/test.sh --cov`)
 4. **Vérifiez la couverture** (≥ 80%)
 5. Committez vos changements (`git commit -am 'Ajouter une nouvelle fonctionnalité'`)
 6. Poussez vers la branche (`git push origin feature/ma-nouvelle-fonctionnalite`)
