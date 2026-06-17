@@ -2,14 +2,15 @@
 Tests unitaires pour le module de preprocessing
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
 
 # Ajouter le chemin src au PYTHONPATH
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from data.preprocessing import DataPreprocessor
 
@@ -33,7 +34,7 @@ class TestDataPreprocessor:
 
         assert isinstance(df, pd.DataFrame)
         assert len(df) > 0
-        assert 'transaction_id' in df.columns
+        assert "transaction_id" in df.columns
 
     def test_load_data_parquet(self, temp_parquet_file, preprocessor_config):
         """Test du chargement de données Parquet"""
@@ -42,21 +43,21 @@ class TestDataPreprocessor:
 
         assert isinstance(df, pd.DataFrame)
         assert len(df) > 0
-        assert 'transaction_id' in df.columns
+        assert "transaction_id" in df.columns
 
     def test_load_data_unsupported_format(self, preprocessor_config):
         """Test avec un format de fichier non supporté"""
         preprocessor = DataPreprocessor(preprocessor_config)
 
         with pytest.raises(ValueError, match="Format de fichier non supporté"):
-            preprocessor.load_data('/path/to/file.txt')
+            preprocessor.load_data("/path/to/file.txt")
 
     def test_load_data_file_not_found(self, preprocessor_config):
         """Test avec un fichier inexistant"""
         preprocessor = DataPreprocessor(preprocessor_config)
 
         with pytest.raises(Exception):
-            preprocessor.load_data('/path/to/nonexistent/file.csv')
+            preprocessor.load_data("/path/to/nonexistent/file.csv")
 
     def test_clean_data(self, sample_dataframe_with_nulls, preprocessor_config):
         """Test du nettoyage des données"""
@@ -71,20 +72,22 @@ class TestDataPreprocessor:
 
     def test_clean_data_removes_critical_nulls(self, preprocessor_config):
         """Test que les lignes avec NaN dans les colonnes critiques sont supprimées"""
-        df = pd.DataFrame({
-            'transaction_id': [1, 2, 3, None, 5],
-            'customer_id': [1, 2, None, 4, 5],
-            'amount': [100, 200, 300, 400, 500],
-            'target': [0, 1, 0, 1, 0]
-        })
+        df = pd.DataFrame(
+            {
+                "transaction_id": [1, 2, 3, None, 5],
+                "customer_id": [1, 2, None, 4, 5],
+                "amount": [100, 200, 300, 400, 500],
+                "target": [0, 1, 0, 1, 0],
+            }
+        )
 
         preprocessor = DataPreprocessor(preprocessor_config)
         df_clean = preprocessor.clean_data(df)
 
         # Les lignes 4 et 5 (index 3 et 2) devraient être supprimées
         assert len(df_clean) == 3
-        assert df_clean['transaction_id'].isnull().sum() == 0
-        assert df_clean['customer_id'].isnull().sum() == 0
+        assert df_clean["transaction_id"].isnull().sum() == 0
+        assert df_clean["customer_id"].isnull().sum() == 0
 
     def test_feature_engineering(self, sample_dataframe, preprocessor_config):
         """Test de la création de features"""
@@ -98,15 +101,21 @@ class TestDataPreprocessor:
             if col in df_features.columns:
                 assert col in df_features.columns
 
-    def test_feature_engineering_with_customer_aggregations(self, sample_dataframe, preprocessor_config):
+    def test_feature_engineering_with_customer_aggregations(
+        self, sample_dataframe, preprocessor_config
+    ):
         """Test des agrégations par client"""
         preprocessor = DataPreprocessor(preprocessor_config)
         df_features = preprocessor.feature_engineering(sample_dataframe)
 
         # Vérifier que les features d'agrégation client sont créées
-        if 'customer_id' in sample_dataframe.columns and 'amount' in sample_dataframe.columns:
-            expected_cols = ['customer_avg_amount', 'customer_std_amount',
-                           'customer_transaction_count', 'customer_total_amount']
+        if "customer_id" in sample_dataframe.columns and "amount" in sample_dataframe.columns:
+            expected_cols = [
+                "customer_avg_amount",
+                "customer_std_amount",
+                "customer_transaction_count",
+                "customer_total_amount",
+            ]
             for col in expected_cols:
                 if col in df_features.columns:
                     assert col in df_features.columns
@@ -166,14 +175,18 @@ class TestDataPreprocessor:
         assert isinstance(y, pd.Series)
         assert len(X) > 0
         # Target column ne devrait pas être dans X
-        assert 'target' not in X.columns
+        assert "target" not in X.columns
 
     def test_prepare_dataframe_without_target(self, sample_dataframe, preprocessor_config):
-        """Test prepare_dataframe sans colonne target"""
-        df_no_target = sample_dataframe.drop(columns=['target'])
+        """Test prepare_dataframe sur des données sans colonne target.
+
+        Le préprocesseur est ajusté (is_training=True) sur des données
+        dépourvues de target : le scaler s'ajuste normalement et y est vide.
+        """
+        df_no_target = sample_dataframe.drop(columns=["target"])
         preprocessor = DataPreprocessor(preprocessor_config)
 
-        X, y = preprocessor.prepare_dataframe(df_no_target, is_training=False)
+        X, y = preprocessor.prepare_dataframe(df_no_target, is_training=True)
 
         assert isinstance(X, pd.DataFrame)
         assert isinstance(y, pd.Series)

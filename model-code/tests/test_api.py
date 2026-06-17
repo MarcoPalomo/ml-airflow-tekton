@@ -2,16 +2,17 @@
 Tests d'intégration pour l'API FastAPI
 """
 
-import pytest
-from fastapi.testclient import TestClient
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import joblib
 import numpy as np
+import pytest
+from fastapi.testclient import TestClient
 from sklearn.ensemble import RandomForestClassifier
 
 # Ajouter le chemin src au PYTHONPATH
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from api.main import app
 
@@ -37,10 +38,13 @@ def mock_model_and_preprocessor(monkeypatch, tmp_path):
 
     # Mock des variables d'environnement
     monkeypatch.setenv("MODEL_PATH", str(model_path))
-    monkeypatch.setenv("PREPROCESSOR_PATH", "/nonexistent/path")  # Pas de preprocessor pour simplifier
+    monkeypatch.setenv(
+        "PREPROCESSOR_PATH", "/nonexistent/path"
+    )  # Pas de preprocessor pour simplifier
 
     # Recharger l'app pour prendre en compte les nouveaux env vars
     from api import main
+
     main.model = model
     main.preprocessor = None
 
@@ -102,7 +106,7 @@ class TestPredictEndpoint:
                 "feature_2": 0.3,
                 "feature_3": 0.7,
                 "feature_4": 0.2,
-                "feature_5": 0.9
+                "feature_5": 0.9,
             }
         }
 
@@ -119,9 +123,7 @@ class TestPredictEndpoint:
 
     def test_predict_invalid_input(self, client, mock_model_and_preprocessor):
         """Test avec des données d'entrée invalides"""
-        invalid_request = {
-            "features": "not a dict"
-        }
+        invalid_request = {"features": "not a dict"}
 
         response = client.post("/predict", json=invalid_request)
 
@@ -149,7 +151,7 @@ class TestPredictEndpoint:
                 "feature_2": 0.3,
                 "feature_3": 0.7,
                 "feature_4": 0.2,
-                "feature_5": 0.9
+                "feature_5": 0.9,
             }
         }
 
@@ -179,10 +181,20 @@ class TestBatchPredictEndpoint:
         """Test de prédiction batch avec modèle"""
         request_data = {
             "instances": [
-                {"feature_1": 0.5, "feature_2": 0.3, "feature_3": 0.7,
-                 "feature_4": 0.2, "feature_5": 0.9},
-                {"feature_1": 0.1, "feature_2": 0.8, "feature_3": 0.4,
-                 "feature_4": 0.6, "feature_5": 0.3}
+                {
+                    "feature_1": 0.5,
+                    "feature_2": 0.3,
+                    "feature_3": 0.7,
+                    "feature_4": 0.2,
+                    "feature_5": 0.9,
+                },
+                {
+                    "feature_1": 0.1,
+                    "feature_2": 0.8,
+                    "feature_3": 0.4,
+                    "feature_4": 0.6,
+                    "feature_5": 0.3,
+                },
             ]
         }
 
@@ -212,8 +224,13 @@ class TestBatchPredictEndpoint:
         """Test avec une seule instance"""
         request_data = {
             "instances": [
-                {"feature_1": 0.5, "feature_2": 0.3, "feature_3": 0.7,
-                 "feature_4": 0.2, "feature_5": 0.9}
+                {
+                    "feature_1": 0.5,
+                    "feature_2": 0.3,
+                    "feature_3": 0.7,
+                    "feature_4": 0.2,
+                    "feature_5": 0.9,
+                }
             ]
         }
 
@@ -226,8 +243,13 @@ class TestBatchPredictEndpoint:
     def test_batch_predict_many_instances(self, client, mock_model_and_preprocessor):
         """Test avec beaucoup d'instances"""
         instances = [
-            {"feature_1": i/100, "feature_2": i/100, "feature_3": i/100,
-             "feature_4": i/100, "feature_5": i/100}
+            {
+                "feature_1": i / 100,
+                "feature_2": i / 100,
+                "feature_3": i / 100,
+                "feature_4": i / 100,
+                "feature_5": i / 100,
+            }
             for i in range(50)
         ]
         request_data = {"instances": instances}
@@ -291,8 +313,11 @@ class TestAPIIntegration:
         # 2. Prédiction
         request_data = {
             "features": {
-                "feature_1": 0.5, "feature_2": 0.3, "feature_3": 0.7,
-                "feature_4": 0.2, "feature_5": 0.9
+                "feature_1": 0.5,
+                "feature_2": 0.3,
+                "feature_3": 0.7,
+                "feature_4": 0.2,
+                "feature_5": 0.9,
             }
         }
         predict_response = client.post("/predict", json=request_data)
@@ -302,8 +327,11 @@ class TestAPIIntegration:
         """Test de prédictions multiples successives"""
         request_data = {
             "features": {
-                "feature_1": 0.5, "feature_2": 0.3, "feature_3": 0.7,
-                "feature_4": 0.2, "feature_5": 0.9
+                "feature_1": 0.5,
+                "feature_2": 0.3,
+                "feature_3": 0.7,
+                "feature_4": 0.2,
+                "feature_5": 0.9,
             }
         }
 
@@ -317,8 +345,11 @@ class TestAPIIntegration:
         # Prédiction unitaire
         single_request = {
             "features": {
-                "feature_1": 0.5, "feature_2": 0.3, "feature_3": 0.7,
-                "feature_4": 0.2, "feature_5": 0.9
+                "feature_1": 0.5,
+                "feature_2": 0.3,
+                "feature_3": 0.7,
+                "feature_4": 0.2,
+                "feature_5": 0.9,
             }
         }
         single_response = client.post("/predict", json=single_request)
@@ -327,10 +358,20 @@ class TestAPIIntegration:
         # Prédiction batch
         batch_request = {
             "instances": [
-                {"feature_1": 0.5, "feature_2": 0.3, "feature_3": 0.7,
-                 "feature_4": 0.2, "feature_5": 0.9},
-                {"feature_1": 0.1, "feature_2": 0.8, "feature_3": 0.4,
-                 "feature_4": 0.6, "feature_5": 0.3}
+                {
+                    "feature_1": 0.5,
+                    "feature_2": 0.3,
+                    "feature_3": 0.7,
+                    "feature_4": 0.2,
+                    "feature_5": 0.9,
+                },
+                {
+                    "feature_1": 0.1,
+                    "feature_2": 0.8,
+                    "feature_3": 0.4,
+                    "feature_4": 0.6,
+                    "feature_5": 0.3,
+                },
             ]
         }
         batch_response = client.post("/batch_predict", json=batch_request)
@@ -347,8 +388,11 @@ class TestAPIIntegration:
         # 3. Predict
         predict_data = {
             "features": {
-                "feature_1": 0.5, "feature_2": 0.3, "feature_3": 0.7,
-                "feature_4": 0.2, "feature_5": 0.9
+                "feature_1": 0.5,
+                "feature_2": 0.3,
+                "feature_3": 0.7,
+                "feature_4": 0.2,
+                "feature_5": 0.9,
             }
         }
         assert client.post("/predict", json=predict_data).status_code == 200
@@ -356,8 +400,13 @@ class TestAPIIntegration:
         # 4. Batch predict
         batch_data = {
             "instances": [
-                {"feature_1": 0.5, "feature_2": 0.3, "feature_3": 0.7,
-                 "feature_4": 0.2, "feature_5": 0.9}
+                {
+                    "feature_1": 0.5,
+                    "feature_2": 0.3,
+                    "feature_3": 0.7,
+                    "feature_4": 0.2,
+                    "feature_5": 0.9,
+                }
             ]
         }
         assert client.post("/batch_predict", json=batch_data).status_code == 200

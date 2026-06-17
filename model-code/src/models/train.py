@@ -112,10 +112,22 @@ class ModelTrainer:
         
         return metrics
 
+    def predict(self, X: pd.DataFrame) -> np.ndarray:
+        """Prédit les classes pour les données fournies."""
+        if self.model is None:
+            raise ValueError("Le modèle doit être entraîné avant la prédiction")
+        return self.model.predict(X)
+
+    def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
+        """Prédit les probabilités de classe pour les données fournies."""
+        if self.model is None:
+            raise ValueError("Le modèle doit être entraîné avant la prédiction")
+        return self.model.predict_proba(X)
+
     def save_model(self, model_path: str) -> str:
         """Sauvegarde le modèle"""
         if self.model is None:
-            raise ValueError("Aucun modèle à sauvegarder")
+            raise ValueError("Le modèle doit être entraîné avant la sauvegarde")
         
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         
@@ -133,9 +145,8 @@ class ModelTrainer:
         
         return model_path
 
-    @staticmethod
-    def load_model(model_path: str) -> Any:
-        """Charge un modèle sauvegardé"""
-        model = joblib.load(model_path)
+    def load_model(self, model_path: str) -> Any:
+        """Charge un modèle sauvegardé et l'attache à l'instance."""
+        self.model = joblib.load(model_path)
         logger.info(f"Modèle chargé: {model_path}")
-        return model
+        return self.model

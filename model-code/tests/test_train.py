@@ -2,17 +2,18 @@
 Tests unitaires pour le module de training
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-from pathlib import Path
 import sys
+from pathlib import Path
+
 import joblib
+import numpy as np
+import pandas as pd
+import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 
 # Ajouter le chemin src au PYTHONPATH
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from models.train import ModelTrainer
 
@@ -24,30 +25,28 @@ class TestModelTrainer:
     def trainer_config_rf(self):
         """Configuration pour RandomForest"""
         return {
-            'model_type': 'random_forest',
-            'n_estimators': 10,
-            'max_depth': 5,
-            'random_state': 42
+            "model_type": "random_forest",
+            "n_estimators": 10,
+            "max_depth": 5,
+            "random_state": 42,
         }
 
     @pytest.fixture
     def trainer_config_lr(self):
         """Configuration pour LogisticRegression"""
-        return {
-            'model_type': 'logistic_regression',
-            'max_iter': 100,
-            'random_state': 42
-        }
+        return {"model_type": "logistic_regression", "max_iter": 100, "random_state": 42}
 
     @pytest.fixture
     def sample_train_data(self):
         """Données d'entraînement de test"""
         np.random.seed(42)
-        X_train = pd.DataFrame({
-            'feature_1': np.random.rand(100),
-            'feature_2': np.random.rand(100),
-            'feature_3': np.random.rand(100)
-        })
+        X_train = pd.DataFrame(
+            {
+                "feature_1": np.random.rand(100),
+                "feature_2": np.random.rand(100),
+                "feature_3": np.random.rand(100),
+            }
+        )
         y_train = pd.Series(np.random.choice([0, 1], 100))
         return X_train, y_train
 
@@ -55,11 +54,13 @@ class TestModelTrainer:
     def sample_test_data(self):
         """Données de test"""
         np.random.seed(43)
-        X_test = pd.DataFrame({
-            'feature_1': np.random.rand(30),
-            'feature_2': np.random.rand(30),
-            'feature_3': np.random.rand(30)
-        })
+        X_test = pd.DataFrame(
+            {
+                "feature_1": np.random.rand(30),
+                "feature_2": np.random.rand(30),
+                "feature_3": np.random.rand(30),
+            }
+        )
         y_test = pd.Series(np.random.choice([0, 1], 30))
         return X_test, y_test
 
@@ -93,7 +94,7 @@ class TestModelTrainer:
 
     def test_create_model_unsupported_type(self):
         """Test avec un type de modèle non supporté"""
-        config = {'model_type': 'unsupported_model'}
+        config = {"model_type": "unsupported_model"}
         trainer = ModelTrainer(config)
 
         with pytest.raises(ValueError, match="Type de modèle non supporté"):
@@ -117,8 +118,8 @@ class TestModelTrainer:
 
         assert model is not None
         assert trainer.model is not None
-        assert hasattr(model, 'predict')
-        assert hasattr(model, 'predict_proba')
+        assert hasattr(model, "predict")
+        assert hasattr(model, "predict_proba")
 
     def test_train_logistic_regression(self, trainer_config_lr, sample_train_data, mock_mlflow_run):
         """Test de l'entraînement d'une LogisticRegression"""
@@ -131,8 +132,9 @@ class TestModelTrainer:
         assert trainer.model is not None
         assert isinstance(model, LogisticRegression)
 
-    def test_train_model_can_predict(self, trainer_config_rf, sample_train_data,
-                                     sample_test_data, mock_mlflow_run):
+    def test_train_model_can_predict(
+        self, trainer_config_rf, sample_train_data, sample_test_data, mock_mlflow_run
+    ):
         """Test que le modèle entraîné peut faire des prédictions"""
         X_train, y_train = sample_train_data
         X_test, _ = sample_test_data
@@ -153,7 +155,9 @@ class TestModelTrainer:
         with pytest.raises(ValueError, match="Le modèle doit être entraîné"):
             trainer.evaluate(X_test, y_test)
 
-    def test_evaluate(self, trainer_config_rf, sample_train_data, sample_test_data, mock_mlflow_run):
+    def test_evaluate(
+        self, trainer_config_rf, sample_train_data, sample_test_data, mock_mlflow_run
+    ):
         """Test de l'évaluation du modèle"""
         X_train, y_train = sample_train_data
         X_test, y_test = sample_test_data
@@ -163,18 +167,19 @@ class TestModelTrainer:
         metrics = trainer.evaluate(X_test, y_test)
 
         assert isinstance(metrics, dict)
-        assert 'accuracy' in metrics
-        assert 'precision' in metrics
-        assert 'recall' in metrics
-        assert 'f1_score' in metrics
+        assert "accuracy" in metrics
+        assert "precision" in metrics
+        assert "recall" in metrics
+        assert "f1_score" in metrics
 
         # Vérifier que les métriques sont dans des plages valides
         for metric_name, metric_value in metrics.items():
-            if metric_name not in ['confusion_matrix']:
+            if metric_name not in ["confusion_matrix"]:
                 assert 0 <= metric_value <= 1
 
-    def test_evaluate_metrics_values(self, trainer_config_rf, sample_train_data,
-                                    sample_test_data, mock_mlflow_run):
+    def test_evaluate_metrics_values(
+        self, trainer_config_rf, sample_train_data, sample_test_data, mock_mlflow_run
+    ):
         """Test des valeurs des métriques"""
         X_train, y_train = sample_train_data
         X_test, y_test = sample_test_data
@@ -184,7 +189,7 @@ class TestModelTrainer:
         metrics = trainer.evaluate(X_test, y_test)
 
         # L'accuracy devrait être raisonnable même pour des données random
-        assert 0 <= metrics['accuracy'] <= 1
+        assert 0 <= metrics["accuracy"] <= 1
         assert trainer.model_metrics == metrics
 
     def test_save_model(self, trainer_config_rf, sample_train_data, mock_mlflow_run, tmp_path):
@@ -201,7 +206,7 @@ class TestModelTrainer:
         # Vérifier qu'on peut recharger le modèle
         loaded_model = joblib.load(model_path)
         assert loaded_model is not None
-        assert hasattr(loaded_model, 'predict')
+        assert hasattr(loaded_model, "predict")
 
     def test_save_model_without_training(self, trainer_config_rf, tmp_path):
         """Test de la sauvegarde sans entraînement"""
@@ -217,14 +222,14 @@ class TestModelTrainer:
         trainer.load_model(temp_model_file)
 
         assert trainer.model is not None
-        assert hasattr(trainer.model, 'predict')
+        assert hasattr(trainer.model, "predict")
 
     def test_load_model_file_not_found(self, trainer_config_rf):
         """Test du chargement d'un fichier inexistant"""
         trainer = ModelTrainer(trainer_config_rf)
 
         with pytest.raises(Exception):
-            trainer.load_model('/path/to/nonexistent/model.joblib')
+            trainer.load_model("/path/to/nonexistent/model.joblib")
 
     def test_predict(self, trainer_config_rf, sample_train_data, sample_test_data, mock_mlflow_run):
         """Test de la prédiction"""
@@ -238,7 +243,9 @@ class TestModelTrainer:
         assert len(predictions) == len(X_test)
         assert all(isinstance(pred, (int, np.integer)) for pred in predictions)
 
-    def test_predict_proba(self, trainer_config_rf, sample_train_data, sample_test_data, mock_mlflow_run):
+    def test_predict_proba(
+        self, trainer_config_rf, sample_train_data, sample_test_data, mock_mlflow_run
+    ):
         """Test de la prédiction de probabilités"""
         X_train, y_train = sample_train_data
         X_test, _ = sample_test_data
@@ -260,8 +267,9 @@ class TestModelTrainer:
         with pytest.raises(ValueError, match="Le modèle doit être entraîné"):
             trainer.predict(X_test)
 
-    def test_full_pipeline(self, trainer_config_rf, sample_train_data,
-                          sample_test_data, mock_mlflow_run, tmp_path):
+    def test_full_pipeline(
+        self, trainer_config_rf, sample_train_data, sample_test_data, mock_mlflow_run, tmp_path
+    ):
         """Test d'intégration du pipeline complet"""
         X_train, y_train = sample_train_data
         X_test, y_test = sample_test_data
@@ -274,7 +282,7 @@ class TestModelTrainer:
 
         # 3. Évaluation
         metrics = trainer.evaluate(X_test, y_test)
-        assert 'accuracy' in metrics
+        assert "accuracy" in metrics
 
         # 4. Sauvegarde
         model_path = tmp_path / "pipeline_model.joblib"
