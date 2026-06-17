@@ -1,7 +1,7 @@
 apiVersion: v2
 name: mlflow
-version: 0.1.0
-appVersion: "2.8.1"
+version: 0.2.0
+appVersion: "2.17.2"
 description: A Helm chart for MLflow Tracking Server
 type: application
 keywords:
