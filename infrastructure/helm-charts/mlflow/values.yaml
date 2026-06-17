@@ -1,4 +1,10 @@
 # MLflow configuration
+#
+# ⚠️  DEV / DÉMO UNIQUEMENT — les mots de passe en clair (postgresqlPassword)
+# doivent être remplacés par un Secret Kubernetes en production.
+# Les credentials AWS et le mot de passe admin sont injectés au déploiement
+# via un fichier de values temporaire (cf. `make install-mlflow`), jamais en --set.
+# Voir SECURITY.md (Option A : Kubernetes Secrets).
 mlflow:
   # Enable or disable the MLflow server
   enabled: true

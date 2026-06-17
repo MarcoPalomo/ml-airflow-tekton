@@ -131,28 +131,28 @@ install-tekton-dashboard:
 
 # Install MLflow
 install-mlflow: check-deps
-	@echo "Installation de MLflow..."
-	@$(HELM) upgrade --install mlflow $(HELM_CHARTS_DIR)/mlflow \
-		--namespace $(NAMESPACE_MLFLOW) \
-		--create-namespace \
-		--set mlflow.server.aws.accessKeyId=$(AWS_ACCESS_KEY_ID) \
-		--set mlflow.server.aws.secretAccessKey=$(AWS_SECRET_ACCESS_KEY) \
-		--set mlflow.server.aws.region=$(AWS_DEFAULT_REGION) \
-		--set mlflow.server.auth.password=$(MLFLOW_ADMIN_PASSWORD) \
-		--wait \
-		--timeout 5m
+	@echo "$(COLOR_BLUE)▶ Installation de MLflow...$(COLOR_RESET)"
+	@# Les secrets sont écrits dans un fichier temporaire (chmod 600) plutôt que
+	@# passés en --set (visibles dans `ps` et l'historique Helm).
+	@SECRETS_FILE=$$(mktemp); chmod 600 $$SECRETS_FILE; \
+	printf 'mlflow:\n  server:\n    aws:\n      accessKeyId: "%s"\n      secretAccessKey: "%s"\n      region: "%s"\n    auth:\n      password: "%s"\n' \
+		"$(AWS_ACCESS_KEY_ID)" "$(AWS_SECRET_ACCESS_KEY)" "$(AWS_DEFAULT_REGION)" "$(MLFLOW_ADMIN_PASSWORD)" > $$SECRETS_FILE; \
+	$(HELM) upgrade --install mlflow $(HELM_CHARTS_DIR)/mlflow \
+		--namespace $(NAMESPACE_MLFLOW) --create-namespace \
+		--values $$SECRETS_FILE --wait --timeout 5m; \
+	rc=$$?; rm -f $$SECRETS_FILE; exit $$rc
 
 # Install Starburst
 install-starburst: check-deps
-	@echo "Installation de Starburst..."
-	@$(HELM) upgrade --install starburst $(HELM_CHARTS_DIR)/starburst \
-		--namespace $(NAMESPACE_STARBURST) \
-		--create-namespace \
-		--set starburst.catalogs.hive.hive.s3.aws-access-key=$(AWS_ACCESS_KEY_ID) \
-		--set starburst.catalogs.hive.hive.s3.aws-secret-key=$(AWS_SECRET_ACCESS_KEY) \
-		--set starburst.catalogs.hive.hive.s3.region=$(AWS_DEFAULT_REGION) \
-		--wait \
-		--timeout 10m
+	@echo "$(COLOR_BLUE)▶ Installation de Starburst...$(COLOR_RESET)"
+	@# Secrets via fichier temporaire (chmod 600) au lieu de --set.
+	@SECRETS_FILE=$$(mktemp); chmod 600 $$SECRETS_FILE; \
+	printf 'starburst:\n  catalogs:\n    hive:\n      hive:\n        s3:\n          aws-access-key: "%s"\n          aws-secret-key: "%s"\n          region: "%s"\n' \
+		"$(AWS_ACCESS_KEY_ID)" "$(AWS_SECRET_ACCESS_KEY)" "$(AWS_DEFAULT_REGION)" > $$SECRETS_FILE; \
+	$(HELM) upgrade --install starburst $(HELM_CHARTS_DIR)/starburst \
+		--namespace $(NAMESPACE_STARBURST) --create-namespace \
+		--values $$SECRETS_FILE --wait --timeout 10m; \
+	rc=$$?; rm -f $$SECRETS_FILE; exit $$rc
 
 # Install all components
 install-all: check-deps check-cluster validate-config create-namespaces update-deps install-tekton install-mlflow install-starburst install-airflow

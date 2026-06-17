@@ -1,4 +1,10 @@
 # Configuration Airflow simplifiée pour installation rapide
+#
+# ⚠️  DEV / DÉMO UNIQUEMENT — ne pas utiliser tel quel en production.
+# Les mots de passe ci-dessous (postgres, admin) sont des valeurs par défaut.
+# En production : créer un Secret Kubernetes et référencer
+#   postgresql.auth.existingSecret et un Secret pour l'utilisateur webserver.
+# Voir SECURITY.md (Option A : Kubernetes Secrets).
 executor: KubernetesExecutor
 
 # Désactiver les fonctionnalités non essentielles pour accélérer l'installation
@@ -20,8 +26,9 @@ postgresql:
         memory: "512Mi"
         cpu: "500m"
 
-# Utilisateur par défaut
+# Utilisateur par défaut + réplicas réduits pour accélérer le démarrage
 webserver:
+  replicas: 1
   defaultUser:
     enabled: true
     username: admin
@@ -37,6 +44,7 @@ webserver:
 
 # Scheduler optimisé
 scheduler:
+  replicas: 1
   resources:
     requests:
       memory: "512Mi"
@@ -52,13 +60,6 @@ triggerer:
 # Workers (non utilisé avec KubernetesExecutor)
 workers:
   enabled: false
-
-# Réduire les réplicas pour accélérer le démarrage
-webserver:
-  replicas: 1
-
-scheduler:
-  replicas: 1
 
 # Configuration de la migration de DB
 migrateDatabaseJob:
