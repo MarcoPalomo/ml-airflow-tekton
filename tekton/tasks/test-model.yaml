@@ -1,24 +1,27 @@
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
   name: test-model-task
 spec:
   params:
-    - name: model-image
+    - name: python-image
+      type: string
+      default: python:3.12-slim
+    - name: min-coverage
+      type: string
+      default: "80"
+  workspaces:
+    - name: source
+      description: Workspace partagé contenant le code source cloné
   steps:
-    - name: unit-tests
-      image: $(params.model-image)
+    - name: run-tests
+      image: $(params.python-image)
+      workingDir: $(workspaces.source.path)/model-code
       script: |
-        python -m pytest tests/unit/
-    
-    - name: integration-tests
-      image: $(params.model-image)
-      script: |
-        python -m pytest tests/integration/
-    
-    - name: model-validation
-      image: $(params.model-image)
-      script: |
-        python scripts/validate_model_performance.py \
-          --test-dataset /data/test-set.csv \
-          --min-accuracy 0.85
+        #!/bin/sh
+        set -e
+        pip install --no-cache-dir -r requirements-test.txt
+        python -m pytest tests/ \
+          --cov=src \
+          --cov-report=term-missing \
+          --cov-fail-under=$(params.min-coverage)

@@ -1,24 +1,42 @@
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
   name: build-model-task
 spec:
   params:
     - name: git-repo
+      type: string
+    - name: git-revision
+      type: string
+      default: main
     - name: model-name
+      type: string
+    - name: image-registry
+      type: string
+      default: registry.local
+  workspaces:
+    - name: source
+      description: Workspace partagé contenant le code source cloné
   results:
     - name: model-image
+      description: Référence complète (avec tag) de l'image construite
   steps:
     - name: git-clone
-      image: alpine/git
+      image: alpine/git:latest
+      workingDir: $(workspaces.source.path)
       script: |
-        git clone $(params.git-repo) /workspace/source
-    
-    - name: build-docker-image
+        #!/bin/sh
+        set -e
+        git clone --depth 1 --branch $(params.git-revision) $(params.git-repo) .
+
+    - name: build-and-push
       image: gcr.io/kaniko-project/executor:latest
+      workingDir: $(workspaces.source.path)
       script: |
-        /kaniko/executor --dockerfile=/workspace/source/Dockerfile \
-                         --context=/workspace/source \
-                         --destination=registry/$(params.model-name):$(date +%Y%m%d-%H%M%S) \
-                         --cache=true
-        echo "registry/$(params.model-name):$(date +%Y%m%d-%H%M%S)" > $(results.model-image.path)
+        IMAGE="$(params.image-registry)/$(params.model-name):$(context.taskRun.name)"
+        /kaniko/executor \
+          --dockerfile=model-code/Dockerfile \
+          --context=model-code \
+          --destination="${IMAGE}" \
+          --cache=true
+        printf '%s' "${IMAGE}" > $(results.model-image.path)

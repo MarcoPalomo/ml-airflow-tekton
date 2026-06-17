@@ -1,35 +1,42 @@
-from datetime import datetime, timedelta
-from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.providers.trino.operators.trino import TrinoOperator
-from airflow.providers.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
+from datetime import timedelta
+
+import pendulum
+
+# Le dossier `dags/` est ajouté au sys.path par Airflow, ce qui rend le
+# package `utils` importable depuis les DAGs.
+from utils.functions import trigger_tekton_pipeline, validate_model_performance
+
+from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
+from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.providers.standard.operators.python import PythonOperator
+from airflow.sdk import DAG
 
 default_args = {
-    'owner': 'ml-team',
-    'depends_on_past': False,
-    'start_date': datetime(2024, 1, 1),
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5),
+    "owner": "ml-team",
+    "depends_on_past": False,
+    "email_on_failure": True,
+    "email_on_retry": False,
+    "retries": 2,
+    "retry_delay": timedelta(minutes=5),
 }
 
 dag = DAG(
-    'ml_model_retraining',
+    "ml_model_retraining",
     default_args=default_args,
-    description='Pipeline de re-entrainement du modèle ML',
-    schedule_interval='0 2 * * *',  # Chaque jour à 2h du matin
+    description="Pipeline de re-entrainement du modèle ML",
+    start_date=pendulum.datetime(2024, 1, 1, tz="UTC"),
+    schedule="0 2 * * *",  # Chaque jour à 2h du matin
     catchup=False,
     max_active_runs=1,
 )
 
 # Tâche 1: Extraction des données
-extract_data = TrinoOperator(
-    task_id='extract_latest_data',
-    trino_conn_id='starburst_trino',
+extract_data = SQLExecuteQueryOperator(
+    task_id="extract_latest_data",
+    conn_id="starburst_trino",
     sql="""
         CREATE TABLE lakehouse.ml_datasets.raw_data_{{ ds_nodash }} AS
-        SELECT 
+        SELECT
             s.transaction_id,
             s.customer_id,
             s.product_id,
@@ -47,14 +54,14 @@ extract_data = TrinoOperator(
 )
 
 # Tâche 2.1: Validation initiale des données
-validate_raw_data = TrinoOperator(
-    task_id='validate_raw_data_quality',
-    trino_conn_id='starburst_trino',
+validate_raw_data = SQLExecuteQueryOperator(
+    task_id="validate_raw_data_quality",
+    conn_id="starburst_trino",
     sql="""
         -- Vérification de la qualité des données brutes
         CREATE TABLE lakehouse.ml_datasets.data_quality_metrics_{{ ds_nodash }} AS
         WITH stats AS (
-            SELECT 
+            SELECT
                 COUNT(*) as total_rows,
                 COUNT(DISTINCT customer_id) as unique_customers,
                 SUM(CASE WHEN customer_id IS NULL THEN 1 ELSE 0 END) as null_customer_ids,
@@ -65,7 +72,7 @@ validate_raw_data = TrinoOperator(
                 MAX(transaction_date) as max_date
             FROM lakehouse.ml_datasets.raw_data_{{ ds_nodash }}
         )
-        SELECT 
+        SELECT
             'raw_data' as dataset_type,
             total_rows,
             unique_customers,
@@ -84,32 +91,32 @@ validate_raw_data = TrinoOperator(
 )
 
 # Tâche 2.2: Nettoyage et transformation avancée
-transform_data = TrinoOperator(
-    task_id='transform_and_clean_data',
-    trino_conn_id='starburst_trino',
+transform_data = SQLExecuteQueryOperator(
+    task_id="transform_and_clean_data",
+    conn_id="starburst_trino",
     sql="""
         -- Étape 1: Création d'une table temporaire avec nettoyage initial
         CREATE TABLE lakehouse.ml_datasets.intermediate_data_{{ ds_nodash }} AS
         WITH cleaned_transactions AS (
-            SELECT 
+            SELECT
                 customer_id,
                 -- Nettoyage des montants
-                CASE 
+                CASE
                     WHEN amount <= 0 THEN NULL  -- Exclure les montants non positifs
                     WHEN amount > 1000000 THEN NULL  -- Valeurs aberrantes extrêmes
-                    ELSE amount 
+                    ELSE amount
                 END as amount,
                 -- Validation des dates
-                CASE 
+                CASE
                     WHEN transaction_date < DATE '2010-01-01' THEN NULL  -- Date trop ancienne
                     WHEN transaction_date > CURRENT_DATE + INTERVAL '1' DAY THEN NULL  -- Date future
-                    ELSE transaction_date 
+                    ELSE transaction_date
                 END as transaction_date,
                 -- Nettoyage des segments clients
-                CASE 
+                CASE
                     WHEN TRIM(customer_segment) = '' THEN 'Unknown'
                     WHEN customer_segment IS NULL THEN 'Unknown'
-                    ELSE customer_segment 
+                    ELSE customer_segment
                 END as customer_segment,
                 campaign_id,
                 channel
@@ -118,7 +125,7 @@ transform_data = TrinoOperator(
         ),
         -- Agrégation des données par client
         customer_metrics AS (
-            SELECT 
+            SELECT
                 customer_id,
                 AVG(amount) as avg_transaction_amount,
                 MEDIAN(amount) as median_transaction_amount,
@@ -138,7 +145,7 @@ transform_data = TrinoOperator(
             HAVING COUNT(*) >= 5  -- Au moins 5 transactions valides
         )
         -- Création de la table finale avec features supplémentaires
-        SELECT 
+        SELECT
             customer_id,
             avg_transaction_amount,
             median_transaction_amount,
@@ -151,11 +158,11 @@ transform_data = TrinoOperator(
             campaign_exposure_count,
             channel_count,
             -- Détection des valeurs aberrantes
-            CASE 
-                WHEN avg_transaction_amount < (q1_amount - 1.5 * (q3_amount - q1_amount)) 
+            CASE
+                WHEN avg_transaction_amount < (q1_amount - 1.5 * (q3_amount - q1_amount))
                      OR avg_transaction_amount > (q3_amount + 1.5 * (q3_amount - q1_amount))
-                THEN TRUE 
-                ELSE FALSE 
+                THEN TRUE
+                ELSE FALSE
             END as is_outlier
         FROM customer_metrics;
     """,
@@ -163,14 +170,14 @@ transform_data = TrinoOperator(
 )
 
 # Tâche 2.3: Validation des données nettoyées
-validate_clean_data = TrinoOperator(
-    task_id='validate_clean_data_quality',
-    trino_conn_id='starburst_trino',
+validate_clean_data = SQLExecuteQueryOperator(
+    task_id="validate_clean_data_quality",
+    conn_id="starburst_trino",
     sql="""
         -- Vérification de la qualité des données nettoyées
         INSERT INTO lakehouse.ml_datasets.data_quality_metrics_{{ ds_nodash }}
         WITH stats AS (
-            SELECT 
+            SELECT
                 'clean_data' as dataset_type,
                 COUNT(*) as total_rows,
                 COUNT(DISTINCT customer_id) as unique_customers,
@@ -183,7 +190,7 @@ validate_clean_data = TrinoOperator(
                 AVG(avg_transaction_amount) as avg_amount_per_customer
             FROM lakehouse.ml_datasets.intermediate_data_{{ ds_nodash }}
         )
-        SELECT 
+        SELECT
             dataset_type,
             total_rows,
             unique_customers,
@@ -201,10 +208,10 @@ validate_clean_data = TrinoOperator(
             outlier_customers,
             ROUND(outlier_customers * 100.0 / NULLIF(total_rows, 0), 2) as pct_outliers
         FROM stats;
-        
+
         -- Création de la table finale pour l'entraînement
         CREATE TABLE lakehouse.ml_datasets.clean_training_data_{{ ds_nodash }} AS
-        SELECT 
+        SELECT
             customer_id,
             avg_transaction_amount,
             median_transaction_amount,
@@ -217,7 +224,7 @@ validate_clean_data = TrinoOperator(
             -- Features temporelles
             DATE_DIFF('day', last_transaction_date, CURRENT_DATE) as days_since_last_transaction,
             -- Normalisation des montants
-            (avg_transaction_amount - MIN(avg_transaction_amount) OVER ()) / 
+            (avg_transaction_amount - MIN(avg_transaction_amount) OVER ()) /
                 NULLIF(MAX(avg_transaction_amount) OVER () - MIN(avg_transaction_amount) OVER (), 0) as normalized_amount,
             -- Encodage one-hot des segments (exemple pour 3 segments)
             CASE WHEN customer_segment = 'Premium' THEN 1 ELSE 0 END as is_premium,
@@ -232,43 +239,51 @@ validate_clean_data = TrinoOperator(
 
 # Tâche 3: Re-entrainement du modèle
 retrain_model = KubernetesPodOperator(
-    task_id='retrain_ml_model',
-    name='ml-retraining-pod',
-    namespace='ml-workloads',
-    image='your-registry/ml-training:latest',
+    task_id="retrain_ml_model",
+    name="ml-retraining-pod",
+    namespace="ml-workloads",
+    image="your-registry/ml-training:latest",
     env_vars={
-        'TRAINING_DATA_PATH': 's3://ml-bucket/training-data/{{ ds_nodash }}/',
-        'MODEL_OUTPUT_PATH': 's3://ml-bucket/models/{{ ds_nodash }}/',
-        'MLFLOW_TRACKING_URI': 'http://mlflow-server:5000',
+        "TRAINING_DATA_PATH": "s3://ml-bucket/training-data/{{ ds_nodash }}/",
+        "MODEL_OUTPUT_PATH": "s3://ml-bucket/models/{{ ds_nodash }}/",
+        "MLFLOW_TRACKING_URI": "http://mlflow-server:5000",
     },
-    cmds=['python'],
-    arguments=['train_model.py', '--data-date', '{{ ds_nodash }}'],
+    cmds=["python"],
+    arguments=["train_model.py", "--data-date", "{{ ds_nodash }}"],
     get_logs=True,
     dag=dag,
 )
 
 # Tâche 4: Validation du nouveau modèle
 validate_model = PythonOperator(
-    task_id='validate_retrained_model',
+    task_id="validate_retrained_model",
     python_callable=validate_model_performance,
     op_kwargs={
-        'model_path': 's3://ml-bucket/models/{{ ds_nodash }}/',
-        'validation_data_path': 's3://ml-bucket/validation-data/',
-        'min_accuracy_threshold': 0.85,
+        "model_path": "s3://ml-bucket/models/{{ ds_nodash }}/",
+        "validation_data_path": "s3://ml-bucket/validation-data/",
+        "min_accuracy_threshold": 0.85,
     },
     dag=dag,
 )
 
 # Tâche 5: Déclenchement du déploiement Tekton (si validation OK)
 trigger_deployment = PythonOperator(
-    task_id='trigger_tekton_deployment',
+    task_id="trigger_tekton_deployment",
     python_callable=trigger_tekton_pipeline,
     op_kwargs={
-        'model_version': '{{ ds_nodash }}',
-        'tekton_pipeline_url': 'http://tekton-dashboard:9097/api/v1/namespaces/tekton-pipelines/pipelineruns',
+        "model_version": "{{ ds_nodash }}",
+        "tekton_pipeline_url": "http://tekton-dashboard:9097/api/v1/namespaces/tekton-pipelines/pipelineruns",
     },
     dag=dag,
 )
 
 # Définition des dépendances
-extract_data >> validate_raw_data >> transform_data >> validate_clean_data >> retrain_model >> validate_model >> trigger_deployment
+(
+    extract_data
+    >> validate_raw_data
+    >> transform_data
+    >> validate_clean_data
+    >> retrain_model
+    >> validate_model
+    >> trigger_deployment
+)

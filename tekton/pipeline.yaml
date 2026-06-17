@@ -1,4 +1,4 @@
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
   name: ml-model-pipeline
@@ -6,51 +6,61 @@ spec:
   params:
     - name: git-repo
       type: string
+    - name: git-revision
+      type: string
+      default: main
     - name: model-name
       type: string
     - name: target-env
       type: string
       default: staging
-  
+  workspaces:
+    - name: shared-workspace
+      description: Workspace partagé entre les tâches (code source cloné)
   tasks:
     - name: build-model
       taskRef:
         name: build-model-task
+      workspaces:
+        - name: source
+          workspace: shared-workspace
       params:
         - name: git-repo
           value: $(params.git-repo)
+        - name: git-revision
+          value: $(params.git-revision)
         - name: model-name
           value: $(params.model-name)
-    
+
     - name: test-validation
-      taskRef:
-        name: test-model-task
       runAfter:
         - build-model
-      params:
-        - name: model-image
-          value: $(tasks.build-model.results.model-image)
-    
-    - name: deploy-staging
       taskRef:
-        name: deploy-model-task
+        name: test-model-task
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+
+    - name: deploy-staging
       runAfter:
         - test-validation
+      taskRef:
+        name: deploy-model-task
       params:
         - name: model-image
           value: $(tasks.build-model.results.model-image)
         - name: environment
           value: staging
-    
+
     - name: deploy-production
-      taskRef:
-        name: deploy-model-task
       runAfter:
         - deploy-staging
       when:
         - input: $(params.target-env)
           operator: in
           values: ["production"]
+      taskRef:
+        name: deploy-model-task
       params:
         - name: model-image
           value: $(tasks.build-model.results.model-image)

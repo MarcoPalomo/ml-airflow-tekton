@@ -1,0 +1,29 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: deploy-model-task
+spec:
+  params:
+    - name: model-image
+      type: string
+    - name: environment
+      type: string
+      default: staging
+    - name: deployment-name
+      type: string
+      default: ml-model-api
+  steps:
+    - name: deploy
+      image: bitnami/kubectl:latest
+      script: |
+        #!/bin/sh
+        set -e
+        echo "Déploiement de $(params.model-image) vers l'environnement $(params.environment)"
+        kubectl set image \
+          deployment/$(params.deployment-name) \
+          $(params.deployment-name)=$(params.model-image) \
+          -n ml-$(params.environment)
+        kubectl rollout status \
+          deployment/$(params.deployment-name) \
+          -n ml-$(params.environment) \
+          --timeout=300s
